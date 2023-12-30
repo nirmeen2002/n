@@ -34,6 +34,16 @@ typedef struct Supermarket {
     pthread_mutex_t storageMutex;
 } Supermarket;
 
+typedef struct {
+    int teamId;
+    int employeeCount;
+    pthread_t managerThread;
+    pthread_t *employeeThreads;
+    pthread_mutex_t teamMutex;
+    pthread_cond_t condition;  // Condition variable for shelving action
+    int readyToShelve;         // Flag to indicate a product is ready to be shelved
+    struct Supermarket* supermarket;
+} Team;
 void initializeSupermarket(Supermarket* supermarket);
 void cleanupSupermarket(Supermarket* supermarket);
 
