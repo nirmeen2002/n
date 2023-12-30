@@ -7,43 +7,42 @@
 #include <pthread.h>
 
 void initializeSupermarket(Supermarket* supermarket) {
-    // User defines the number of products
+    // Get number of products from the user
     printf("Enter the number of products: ");
     scanf("%d", &supermarket->productCount);
 
-    // Allocate memory for the products
+    // Allocate memory for products
     supermarket->products = (Product*)malloc(supermarket->productCount * sizeof(Product));
 
     for (int i = 0; i < supermarket->productCount; i++) {
-        // User input for each product
         supermarket->products[i].id = i;
-        printf("Product %d:\n", i + 1);
+        printf("Enter name for product %d: ", i + 1);
+        scanf("%49s", supermarket->products[i].name); // Limit input to 49 characters
 
-        printf(" Name: ");
-        scanf("%49s", supermarket->products[i].name);  // Limit name to 49 characters
-
-        printf(" Total amount: ");
+        printf("Enter total amount for product %d: ", i + 1);
         scanf("%d", &supermarket->products[i].totalAmount);
 
-        printf(" Amount on shelf: ");
+        printf("Enter amount on shelf for product %d: ", i + 1);
         scanf("%d", &supermarket->products[i].shelfAmount);
     }
 
-    // Initialize shelf capacity (common for all products)
-    printf("Enter shelf capacity for each product: ");
-    scanf("%d", &supermarket->shelfCapacity);
-
-    // Initialize team details
-    printf("Enter number of shelving teams: ");
+    // Get number of shelving teams from the user
+    printf("Enter the number of shelving teams: ");
     scanf("%d", &supermarket->teamCount);
+
+    // Allocate memory for teams
     for (int i = 0; i < supermarket->teamCount; i++) {
+        printf("Enter the number of employees for team %d: ", i + 1);
+        scanf("%d", &supermarket->teams[i].employeeCount);
+
         supermarket->teams[i].teamId = i;
-        supermarket->teams[i].employeeCount = MAX_EMPLOYEES_PER_TEAM; // Default value, can be user-defined
         pthread_mutex_init(&supermarket->teams[i].teamMutex, NULL);
-        supermarket->teams[i].supermarket = supermarket; // Link to supermarket
+
+        // Allocate memory for employee threads within each team
+        supermarket->teams[i].employeeThreads = (pthread_t*)malloc(supermarket->teams[i].employeeCount * sizeof(pthread_t));
     }
 
-    // Initialize storage mutex
+    // Initialize the storage mutex
     pthread_mutex_init(&supermarket->storageMutex, NULL);
 }
 
@@ -51,9 +50,12 @@ void cleanupSupermarket(Supermarket* supermarket) {
     // Free allocated memory for products
     free(supermarket->products);
 
-    // Destroy mutexes
+    // Free allocated memory for employee threads in each team and destroy mutexes
     for (int i = 0; i < supermarket->teamCount; i++) {
+        free(supermarket->teams[i].employeeThreads);
         pthread_mutex_destroy(&supermarket->teams[i].teamMutex);
     }
+
+    // Destroy the storage mutex
     pthread_mutex_destroy(&supermarket->storageMutex);
 }
