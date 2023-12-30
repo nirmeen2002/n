@@ -44,6 +44,7 @@ typedef struct {
     int readyToShelve;         // Flag to indicate a product is ready to be shelved
     struct Supermarket* supermarket;
 } Team;
+
 void initializeSupermarket(Supermarket* supermarket);
 void cleanupSupermarket(Supermarket* supermarket);
 
