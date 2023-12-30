@@ -7,7 +7,6 @@
 
 #define MAX_TEAMS 10
 #define MAX_EMPLOYEES_PER_TEAM 5
-#define STORAGE_CAPACITY 1000
 
 typedef struct {
     int id;
@@ -20,23 +19,19 @@ typedef struct {
     int teamId;
     int employeeCount;
     pthread_t managerThread;
-    pthread_t employeeThreads[MAX_EMPLOYEES_PER_TEAM];
+    pthread_t *employeeThreads;
     pthread_mutex_t teamMutex;
+    struct Supermarket* supermarket;
 } Team;
 
-typedef struct {
-    int customerId;
-    pid_t customerProcessId;
-} Customer;
-
-typedef struct {
+typedef struct Supermarket {
     int productCount;
     int shelfCapacity;
+    int replenishThreshold;
     Product* products;
     int teamCount;
     Team teams[MAX_TEAMS];
     pthread_mutex_t storageMutex;
-    int storageArea[STORAGE_CAPACITY];
 } Supermarket;
 
 void initializeSupermarket(Supermarket* supermarket);
