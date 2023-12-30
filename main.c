@@ -5,69 +5,49 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
+#include <time.h>
 
 volatile sig_atomic_t terminate = 0;
+int minArrivalInterval, maxArrivalInterval; // User-defined arrival intervals
 
 void handleSignal(int sig) {
     terminate = 1;
 }
 
+void createCustomerProcess(Supermarket *supermarket, int customerId) {
+    pid_t pid = fork();
+    if (pid == 0) {
+        // Child process
+        Customer customer;
+        customer.customerId = customerId;
+        customerProcess(&customer, supermarket);
+        exit(0);
+    }
+}
+
 int main() {
+    srand(time(NULL)); // Set the seed for random number generation
+
     Supermarket supermarket;
     initializeSupermarket(&supermarket);
-
-    // Register signal handler
     signal(SIGINT, handleSignal);
 
-    // Create team threads
-    for (int i = 0; i < supermarket.teamCount; i++) {
-        // Create manager thread
-        pthread_create(&supermarket.teams[i].managerThread, NULL, teamManager, &supermarket);
+    // Get customer arrival intervals from the user
+    printf("Enter the minimum customer arrival interval (seconds): ");
+    scanf("%d", &minArrivalInterval);
+    printf("Enter the maximum customer arrival interval (seconds): ");
+    scanf("%d", &maxArrivalInterval);
 
-        // Create employee threads
-        for (int j = 0; j < supermarket.teams[i].employeeCount; j++) {
-            pthread_create(&supermarket.teams[i].employeeThreads[j], NULL, shelfEmployee, &supermarket);
-        }
-    }
-
-    // Define number of customers
-    int numberOfCustomers = 10; // Example number of customers
-    pid_t customerPIDs[numberOfCustomers];
-
-    // Create customer processes
-    for (int i = 0; i < numberOfCustomers; i++) {
-        pid_t pid = fork();
-        if (pid == 0) {
-            // Child process
-            Customer customer;
-            customer.customerId = i;
-            customerProcess(&customer, &supermarket);
-            exit(0);
-        } else {
-            // Parent process
-            customerPIDs[i] = pid;
-        }
-    }
+    int customerId = 0;
 
     // Main simulation loop
     while (!terminate) {
-        // Simulation logic here
-        sleep(1); // Simulate time passing
-    }
+        int interval = rand() % (maxArrivalInterval - minArrivalInterval + 1) + minArrivalInterval;
+        sleep(interval); // Wait for the next customer
 
-    // Terminate and wait for customer processes
-    for (int i = 0; i < numberOfCustomers; i++) {
-        kill(customerPIDs[i], SIGTERM);
-        waitpid(customerPIDs[i], NULL, 0);
-    }
-
-    // Join team threads
-    for (int i = 0; i < supermarket.teamCount; i++) {
-        pthread_join(supermarket.teams[i].managerThread, NULL);
-
-        for (int j = 0; j < supermarket.teams[i].employeeCount; j++) {
-            pthread_join(supermarket.teams[i].employeeThreads[j], NULL);
-        }
+        createCustomerProcess(&supermarket, customerId++);
+        
+        // Other simulation logic can be added here if needed
     }
 
     // Cleanup
